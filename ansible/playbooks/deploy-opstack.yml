@@ -1,0 +1,113 @@
+---
+- name: Deploy Mintaray OP Stack configuration
+  hosts: opstack
+  gather_facts: false
+
+  # 두 노드를 동시에 변경하지 않는다.
+  serial: 1
+
+  vars:
+    remote_compose_dir: /opt/opstack/compose
+    local_compose_dir: "{{ playbook_dir }}/../../nodes/{{ node_profile }}/opstack"
+    stage_dir: "/tmp/mintaray-opstack-{{ inventory_hostname }}"
+
+  tasks:
+    - name: Check Docker Compose
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - version
+      changed_when: false
+
+    - name: Create temporary staging directory
+      ansible.builtin.file:
+        path: "{{ stage_dir }}"
+        state: directory
+        mode: "0700"
+
+    - name: Stage compose.yml
+      ansible.builtin.copy:
+        src: "{{ local_compose_dir }}/compose.yml"
+        dest: "{{ stage_dir }}/compose.yml"
+        mode: "0644"
+
+    - name: Stage compose.override.yaml
+      ansible.builtin.copy:
+        src: "{{ local_compose_dir }}/compose.override.yaml"
+        dest: "{{ stage_dir }}/compose.override.yaml"
+        mode: "0644"
+
+    # 운영 파일을 덮어쓰기 전에 새 Git 설정을 먼저 검증한다.
+    - name: Validate staged Compose configuration
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - --project-directory
+          - "{{ remote_compose_dir }}"
+          - -f
+          - "{{ stage_dir }}/compose.yml"
+          - -f
+          - "{{ stage_dir }}/compose.override.yaml"
+          - config
+          - -q
+      changed_when: false
+
+    - name: Deploy compose.yml
+      ansible.builtin.copy:
+        src: "{{ local_compose_dir }}/compose.yml"
+        dest: "{{ remote_compose_dir }}/compose.yml"
+        mode: "0644"
+      register: compose_base
+
+    - name: Deploy compose.override.yaml
+      ansible.builtin.copy:
+        src: "{{ local_compose_dir }}/compose.override.yaml"
+        dest: "{{ remote_compose_dir }}/compose.override.yaml"
+        mode: "0644"
+      register: compose_override
+
+    - name: Validate live Compose configuration
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - config
+          - -q
+      args:
+        chdir: "{{ remote_compose_dir }}"
+      changed_when: false
+
+    # Git 설정이 실제로 변경됐을 때만 Docker Compose 적용
+    - name: Apply OP Stack configuration
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - up
+          - -d
+      args:
+        chdir: "{{ remote_compose_dir }}"
+      when: compose_base.changed or compose_override.changed
+      register: compose_apply
+
+    - name: Show OP Stack service status
+      ansible.builtin.command:
+        argv:
+          - docker
+          - compose
+          - ps
+      args:
+        chdir: "{{ remote_compose_dir }}"
+      changed_when: false
+      register: compose_ps
+
+    - name: Print service status
+      ansible.builtin.debug:
+        var: compose_ps.stdout_lines
+
+    - name: Remove temporary staging directory
+      ansible.builtin.file:
+        path: "{{ stage_dir }}"
+        state: absent

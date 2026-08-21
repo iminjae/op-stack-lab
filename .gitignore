@@ -1,0 +1,33 @@
+# Secrets
+secrets/
+.env
+.env.*
+*.key
+*.pem
+*.jwt
+
+# Raw deployment working state
+deployer/.deployer/
+
+# Runtime databases and volumes
+data/
+volumes/
+*.log
+
+# macOS
+.DS_Store
+deployer/op-deployer
+deployer/keys/
+# ================================
+# Local secrets
+**/.env
+**/.env.*
+# Logs / temporary files
+*.bak
+*.old
+*.tmp
+*before-address-migra*
+role-seed-*/
+# OS / editor
+.vscode/
+.idea/

@@ -1,0 +1,141 @@
+services:
+  op-reth:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-reth:v2.4.0
+    platform: linux/arm64
+
+    restart: unless-stopped
+    stop_grace_period: 5m
+
+    ports:
+      - "127.0.0.1:8545:8545"
+
+    volumes:
+      - /opt/opstack/config/chain/genesis.json:/config/genesis.json:ro
+      - /opt/opstack/secrets/jwt.hex:/run/secrets/jwt.hex:ro
+      - /opt/opstack/data/op-reth:/data
+
+    command:
+      - node
+      - --chain=/config/genesis.json
+      - --datadir=/data
+      - --db.max-size=256GB
+
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.port=8545
+      - --http.api=eth,net,web3,debug,txpool
+
+      - --authrpc.addr=0.0.0.0
+      - --authrpc.port=8551
+      - --authrpc.jwtsecret=/run/secrets/jwt.hex
+
+      - --rollup.disable-tx-pool-gossip
+      - --builder.deadline=2
+      - --builder.interval=100ms
+
+    logging:
+      driver: local
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  op-node:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:v1.19.3
+    platform: linux/arm64
+
+    restart: unless-stopped
+    stop_grace_period: 2m
+
+    depends_on:
+      - op-reth
+
+    env_file:
+      - /opt/opstack/secrets/op-node.env
+
+    ports:
+      - "127.0.0.1:8547:8547"
+
+    volumes:
+      - /opt/opstack/config/chain/rollup.json:/config/rollup.json:ro
+      - /opt/opstack/secrets/jwt.hex:/run/secrets/jwt.hex:ro
+      - /opt/opstack/data/op-node:/data
+
+    command:
+      - op-node
+
+      - --l2=http://op-reth:8551
+      - --l2.jwt-secret=/run/secrets/jwt.hex
+      - --l2.enginekind=reth
+
+      - --rollup.config=/config/rollup.json
+
+      - --sequencer.enabled=true
+      - --sequencer.stopped=false
+      - --sequencer.l1-confs=4
+      - --sequencer.recover=false
+      - --sequencer.max-safe-lag=1800
+
+      - --verifier.l1-confs=4
+
+
+      - --rpc.addr=0.0.0.0
+      - --rpc.port=8547
+      - --rpc.enable-admin
+
+      - --safedb.path=/data/safe.db
+
+      - --log.level=info
+      - --log.format=json
+
+    logging:
+      driver: local
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  op-batcher:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:v1.16.11
+    platform: linux/arm64
+
+    restart: unless-stopped
+    stop_grace_period: 2m
+
+    depends_on:
+      - op-reth
+      - op-node
+
+    env_file:
+      - /opt/opstack/secrets/op-batcher.env
+
+    entrypoint:
+      - op-batcher
+
+    logging:
+      driver: local
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  op-proposer:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer:v1.10.0
+    platform: linux/arm64
+    restart: unless-stopped
+    stop_grace_period: 2m
+    depends_on:
+      - op-node
+    env_file:
+      - /opt/opstack/secrets/op-proposer.env
+    ports:
+      - "127.0.0.1:8560:8560"
+    entrypoint:
+      - op-proposer
+    command:
+      - --rpc.addr=0.0.0.0
+      - --rpc.port=8560
+      - --log.level=info
+      - --log.format=json
+    logging:
+      driver: local
+      options:
+        max-size: "50m"
+        max-file: "5"

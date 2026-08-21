@@ -1,0 +1,61 @@
+services:
+
+  op-reth:
+    command:
+      - node
+      - --chain=/config/genesis.json
+      - --datadir=/data
+      - --db.max-size=256GB
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.port=8545
+      - --http.api=eth,net,web3,debug,txpool
+      - --authrpc.addr=0.0.0.0
+      - --authrpc.port=8551
+      - --authrpc.jwtsecret=/run/secrets/jwt.hex
+      - --rollup.disable-tx-pool-gossip
+      - --builder.deadline=2
+      - --builder.interval=100ms
+      - --metrics
+      - 0.0.0.0:9001
+    ports:
+      - "192.168.45.11:9001:9001"
+
+  op-node:
+    env_file:
+      - /opt/opstack/secrets/op-node-p2p.env
+
+    environment:
+      OP_NODE_METRICS_ENABLED: "true"
+      OP_NODE_METRICS_ADDR: "0.0.0.0"
+      OP_NODE_METRICS_PORT: "7300"
+      OP_NODE_P2P_LISTEN_IP: "0.0.0.0"
+      OP_NODE_P2P_LISTEN_TCP_PORT: "9222"
+      OP_NODE_P2P_LISTEN_UDP_PORT: "9222"
+      OP_NODE_P2P_NO_DISCOVERY: "true"
+      OP_NODE_P2P_PRIV_PATH: "/p2p/priv.txt"
+      OP_NODE_P2P_PEERSTORE_PATH: "/p2p/peerstore"
+      OP_NODE_P2P_DISABLE: "false"
+    volumes:
+      - /opt/opstack/data/op-node-p2p:/p2p
+
+    ports:
+      - "192.168.45.11:7300:7300"
+
+      - "192.168.45.11:9222:9222/tcp"
+      - "192.168.45.11:9222:9222/udp"
+  op-batcher:
+    environment:
+      OP_BATCHER_METRICS_ENABLED: "true"
+      OP_BATCHER_METRICS_ADDR: "0.0.0.0"
+      OP_BATCHER_METRICS_PORT: "7301"
+    ports:
+      - "192.168.45.11:7301:7301"
+
+  op-proposer:
+    environment:
+      OP_PROPOSER_METRICS_ENABLED: "true"
+      OP_PROPOSER_METRICS_ADDR: "0.0.0.0"
+      OP_PROPOSER_METRICS_PORT: "7302"
+    ports:
+      - "192.168.45.11:7302:7302"
