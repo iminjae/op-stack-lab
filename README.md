@@ -12,7 +12,7 @@ Ethereum Sepolia를 L1 settlement layer로 사용하는 **OP Stack 기반 L2 네
 | --- | --- |
 | Network Portal | https://mintaray.xyz |
 | Block Explorer | https://explorer.mintaray.xyz |
-| Monitoring | https://monitor.mintaray.xyz |
+| Monitoring | https://monitor.mintaray.xyz/public-dashboards/ddbb2de850b84d789dd01d40fc873b1a?from=now-3h&to=now&timezone=browser |
 | Public RPC | https://rpc.mintaray.xyz |
 
 ### Network
@@ -427,6 +427,6 @@ Automate
 
 - Portal: https://mintaray.xyz
 - Explorer: https://explorer.mintaray.xyz
-- Monitoring: https://monitor.mintaray.xyz
+- Monitoring: https://monitor.mintaray.xyz/public-dashboards/ddbb2de850b84d789dd01d40fc873b1a
 - RPC: https://rpc.mintaray.xyz
 
