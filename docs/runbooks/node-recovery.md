@@ -14,6 +14,19 @@ Mintaray OP Stack의 Pi5 Sequencer 또는 Pi4 Verifier가 재부팅, Docker 장�
 - Execution Client 상태를 먼저 확인한 후 op-node를 점검한다.
 - 복구 후 unsafe / safe / finalized 진행 상태를 확인한다.
 
+## 증상별 진입점
+
+| 증상 | 상세 절차 |
+| --- | --- |
+| op-node 초기화 실패, L1 블록 해시 검증 오류, 하드포크 대응 | [op-node 버전·하드포크 대응](op-node-upgrade.md) |
+| safe 정체, L1 scan과 safe origin 지연의 차이, Batcher 제출 문제 | [Safe chain 지연 진단 및 복구](safe-chain-recovery.md) |
+| Grafana No Data, metrics target down, 로그 패널 공백 | [Grafana No Data 진단](monitoring-no-data.md) |
+| Pi4 unsafe가 Pi5를 따라가지 못함 | [P2P Health Check](p2p-health-check.md) |
+
+초기화 오류는 단순 재시작 전에 버전과 L1 / L2 호환성을 확인한다.
+최근 사건은 [Incident 003](../incidents/003-op-node-l1-block-hash-mismatch.md)과
+[Incident 004](../incidents/004-safe-chain-recovery.md)를 참고한다.
+
 ---
 
 # 1. 현재 노드 구성
@@ -280,6 +293,9 @@ finalized_l2 진행 여부
 ~~~
 
 정상 steady-state에서는 `current_l1`이 L1 head 근처를 지속적으로 따라간다.
+
+safe origin과 L2 safety gap, timeout 및 JSON-RPC 오류 검사까지 포함한 조회는
+[Safe chain Runbook](safe-chain-recovery.md)의 명령을 사용한다.
 
 ---
 
@@ -557,11 +573,11 @@ daily request limit reached
 context deadline exceeded
 ~~~
 
-관련 Incident:
+관련 Incident: [L1 RPC Rate Limit](../incidents/002-l1-rpc-rate-limit.md).
 
-~~~text
-docs/incidents/002-l1-rpc-rate-limit.md
-~~~
+`head_l1.number - current_l1.number`가 작더라도 safe chain은 뒤처질 수 있다.
+이 경우 RPC quota 문제로 바로 판단하지 않고 safe origin gap, 배치 제출·L1 확인·배치 처리,
+sequencing window와 reorg를 [Safe chain Runbook](safe-chain-recovery.md)에 따라 점검한다.
 
 ---
 
@@ -699,6 +715,8 @@ docker compose config
 - Batcher Up
 - Proposer Up
 - P2P host 정상
+- 일반 설정 복원 후 새 L1 배치 확인과 safe 진행을 함께 확인
+- 복원 후 관련 오류 재발 여부 확인 ([상세 기준](safe-chain-recovery.md))
 
 ## Pi4
 

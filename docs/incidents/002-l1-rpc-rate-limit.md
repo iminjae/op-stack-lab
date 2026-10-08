@@ -105,6 +105,14 @@ scan_gap   ≈ 22,569
 
 형태로 backlog가 감소하는 것을 확인했다.
 
+### Scan gap은 작지만 safe chain이 뒤처지는 경우
+
+이 사건은 RPC 제한으로 `current_l1` 자체가 지연된 사례다.
+반면 [Incident 004](004-safe-chain-recovery.md)에서는 L1 scan gap이 작아도 safe origin 지연이 크게 관측됐다.
+두 상황을 같은 원인으로 처리하지 않고 배치 제출·L1 확인·배치 처리·sequencing window·reorg를 구분한다.
+진단 절차와 지표 단위는 [Safe chain Runbook](../runbooks/safe-chain-recovery.md)을 참고한다.
+이 문서의 `scan_gap ≈ 4`는 당시 관측값이며 고정 정상 기준이 아니다.
+
 ---
 
 ## 원인

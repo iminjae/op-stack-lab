@@ -170,6 +170,10 @@ head_l1 - current_l1 ≈ 4
 
 [Incident 002 — L1 RPC Rate Limit](docs/incidents/002-l1-rpc-rate-limit.md)
 
+위 scan gap은 당시 복구 관측값이며 공통 정상 기준이 아닙니다.
+scan gap이 작아도 safe chain이 뒤처질 수 있으므로 [Safe chain 진단 Runbook](docs/runbooks/safe-chain-recovery.md)에서
+safe origin gap과 L2 safety gap을 함께 확인합니다.
+
 ---
 
 # Observability
@@ -210,6 +214,9 @@ Docker logs
 - `op-challenger`
 
 Public Portal에서는 read-only Monitoring dashboard를 제공합니다.
+
+데이터가 보이지 않을 때는 [Grafana No Data 진단](docs/runbooks/monitoring-no-data.md)에서
+패널·데이터소스·scrape·프로세스 상태를 구분합니다.
 
 ---
 
@@ -318,11 +325,19 @@ Runtime State  → Host / Docker Volume
 
 - [Explorer Transaction Visibility Delay](docs/incidents/001-explorer-visibility-delay.md)
 - [L1 RPC Rate Limit / Derivation Lag](docs/incidents/002-l1-rpc-rate-limit.md)
+- [L1 블록 해시 검증 실패로 인한 op-node 기동 중단 (2026-10-07)](docs/incidents/003-op-node-l1-block-hash-mismatch.md)
+- [Safe chain 진행 지연 및 Batcher 복구 (2026-10-08)](docs/incidents/004-safe-chain-recovery.md)
+
+10월 기록은 운영 점검 대화 요약 기준입니다. 일반 설정 복원 이후의 배치·safe 진행과
+Pi4를 포함한 최종 복구는 후속 확인 항목으로 남아 있습니다.
 
 ## Runbooks
 
 - [P2P Health Check](docs/runbooks/p2p-health-check.md)
 - [Node Recovery](docs/runbooks/node-recovery.md)
+- [op-node 버전·하드포크 대응](docs/runbooks/op-node-upgrade.md)
+- [Safe chain 지연 진단 및 복구](docs/runbooks/safe-chain-recovery.md)
+- [Grafana No Data 진단](docs/runbooks/monitoring-no-data.md)
 
 ---
 
